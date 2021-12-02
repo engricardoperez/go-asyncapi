@@ -1,0 +1,93 @@
+asyncapi: 2.0.0
+info:
+  title: My Lovely Messaging API
+  version: 1.2.3
+servers:
+  live:
+    url: api.{country}.lovely.com:5672
+    description: Production instance.
+    protocol: amqp
+    protocolVersion: 0.9.1
+    variables:
+      country:
+        enum:
+        - RU
+        - US
+        - DE
+        - FR
+        default: US
+        description: Country code.
+channels:
+  another.one:
+    subscribe:
+      message:
+        $ref: '#/components/messages/MyAnotherMessage'
+  one.{name}.two:
+    parameters:
+      name:
+        schema:
+          description: Name
+          type: string
+    publish:
+      message:
+        $ref: '#/components/messages/MyMessage'
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: some-exchange
+components:
+  schemas:
+    MyAnotherMessage:
+      properties:
+        item:
+          $ref: '#/components/schemas/SubItem'
+          description: Some item
+      type: object
+    MyMessage:
+      properties:
+        createdAt:
+          description: Creation time
+          format: date-time
+          type: string
+        items:
+          description: List of items
+          items:
+            $ref: '#/components/schemas/SubItem'
+          type:
+          - array
+          - "null"
+      type: object
+    SubItem:
+      properties:
+        key:
+          description: Item key
+          type: string
+        values:
+          description: List of item values
+          items:
+            type: integer
+          type:
+          - array
+          - "null"
+          uniqueItems: true
+      type: object
+  messages:
+    MyAnotherMessage:
+      headers:
+        properties:
+          X-Trace-ID:
+            description: Tracing header
+            type: string
+        required:
+        - X-Trace-ID
+        type: object
+      payload:
+        $ref: '#/components/schemas/MyAnotherMessage'
+      summary: Sample consumer
+      description: This is another sample schema.
+    MyMessage:
+      payload:
+        $ref: '#/components/schemas/MyMessage'
+      summary: Sample publisher
+      description: This is a sample schema.
